@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta Information -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+        // Tailwind CSS Configuration
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#10b981',
+                        dark: {
+                            bg: '#1a1a1a',
+                            card: '#2d2d2d',
+                            text: '#e5e5e5'
+                        }
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Remix Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+
+    <!-- Custom Styles -->
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+
+        /* Dark Mode Styles */
+        body.dark {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        body.dark .task-card,
+        body.dark .modal-content,
+        body.dark nav,
+        body.dark .filter-tab,
+        body.dark .toast > div {
+            background-color: var(--dark-card);
+        }
+
+        body.dark .text-gray-800,
+        body.dark .text-gray-700,
+        body.dark .text-gray-600 {
+            color: var(--dark-text);
+        }
+
+        body.dark .border-gray-100,
+        body.dark .border-gray-300 {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark .hover\:bg-gray-100:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark .text-gray-500,
+        body.dark .text-gray-400 {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        body.dark input,
+        body.dark textarea {
+            background-color: var(--dark-bg);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: var(--dark-text);
+        }
+
+        body.dark input::placeholder,
+        body.dark textarea::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        :root {
+            --dark-bg: #1a1a1a;
+            --dark-card: #2d2d2d;
+            --dark-text: #e5e5e5;
+        }
+
+        /* Toast Notification Styles */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        /* Modal Animation */
+        .auth-modal {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        /* Task Card Animation */
+        .task-card {
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Completed Task Styles */
+        .completed-task {
+            opacity: 0.7;
+        }
+
+        .completed-task h3 {
+            text-decoration: line-through;
+        }
+
+        /* Filter Tab Styles */
+        .filter-tab {
+            transition: all 0.3s ease;
+        }
+
+        .filter-tab.active {
+            background-color: rgba(37, 99, 235, 0.1);
+            color: #2563eb;
+            font-weight: 500;
+            transform: scale(1.02);
+        }
+
+        .filter-tab {
+            transition: all 0.2s ease;
+        }
+
+        .filter-tab:hover:not(.active) {
+            background-color: rgba(37, 99, 235, 0.05);
+        }
+
+        /* Add Button Hover Effect */
+        .add-btn {
+            transition: all 0.3s ease;
+        }
+
+        .add-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .delete-animation {
+            animation: fadeOut 0.3s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateY(20px) scale(0.9);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-20">
+    <!-- Navigation Bar -->
+    <nav class="fixed top-0 w-full bg-white shadow-sm z-50">
+        <div class="flex items-center justify-between px-4 py-3">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <h1 class="text-xl font-['Pacifico'] text-primary">logo</h1>
+            </div>
+
+            <!-- User Info and Theme Toggle -->
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3">
+                    <!-- User Name -->
+                    <span id="user-name" class="text-sm text-gray-600 dark:text-gray-300 hidden"></span>
+                    <!-- Task Counter -->
+                    <div class="text-sm text-gray-600 dark:text-gray-300">
+                        <span id="task-counter">0 tasks</span>
+                    </div>
+                </div>
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <i class="ri-sun-line dark:ri-moon-line text-gray-600 dark:text-gray-300"></i>
+                </button>
+                <!-- Auth Button -->
+                <button id="auth-btn" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 cursor-pointer">
+                    <i class="ri-user-line text-gray-600 dark:text-gray-300"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Authentication Modal -->
+    <div id="auth-modal" class="auth-modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-dark-card rounded-lg w-full max-w-md mx-4">
+            <div class="p-5">
+                <!-- Modal Header -->
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="auth-modal-title" class="text-lg font-semibold text-gray-800 dark:text-gray-200">Sign In</h2>
+                    <button id="close-auth-modal" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <i class="ri-close-line text-gray-500 dark:text-gray-400"></i>
+                    </button>
+                </div>
+                <!-- Authentication Form -->
+                <form id="auth-form">
+                    <!-- Name Input -->
+                    <div class="mb-4">
+                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                        <input type="text" id="name" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required minlength="2" maxlength="50" pattern="[A-Za-z0-9\s]+" title="Name should only contain letters, numbers and spaces">
+                        <p class="mt-1 text-xs text-gray-500">2-50 characters, letters and numbers only</p>
+                    </div>
+                    <!-- Email Input -->
+                    <div class="mb-4">
+                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <input type="email" id="email" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Please enter a valid email address">
+                        <p class="mt-1 text-xs text-gray-500">Enter a valid email address</p>
+                    </div>
+                    <!-- Password Input -->
+                    <div class="mb-4">
+                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                        <input type="password" id="password" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" required minlength="6" title="Password must be at least 6 characters long and include at least one letter and one number">
+                    </div>
+                    <!-- Confirm Password Input (Hidden by Default) -->
+                    <div id="confirm-password-field" class="mb-4 hidden">
+                        <label for="confirm-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+                        <input type="password" id="confirm-password" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <!-- Form Actions -->
+                    <div class="flex justify-end">
+                        <button type="button" id="toggle-auth-mode" class="text-sm text-primary dark:text-primary hover:underline mr-4">Create account</button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-button hover:bg-primary/90">Sign In</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <div class="bg-white dark:bg-dark-card rounded-lg shadow-lg p-4 flex items-start space-x-4">
+            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                <i class="ri-error-warning-line text-red-500 dark:text-red-300"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100" id="toast-title"></h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" id="toast-message"></p>
+                <div class="mt-3 flex space-x-3">
+                    <button id="toast-back" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">Go Back</button>
+                    <button id="toast-complete" class="text-sm text-primary hover:text-primary/80">Mark Subtasks Complete</button>
+                </div>
+            </div>
+            <button id="close-toast" class="flex-shrink-0 ml-4">
+                <i class="ri-close-line text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="fixed top-[57px] w-full bg-white border-b border-gray-100 dark:border-gray-700 z-40">
+        <div class="flex px-4 py-2 overflow-x-auto">
+            <button class="filter-tab active px-4 py-2 rounded-full text-sm mr-2 cursor-pointer" data-filter="all" aria-selected="true" role="tab">All</button>
+            <button class="filter-tab px-4 py-2 rounded-full text-sm mr-2 cursor-pointer" data-filter="pending" aria-selected="false" role="tab">Pending</button>
+            <button class="filter-tab px-4 py-2 rounded-full text-sm cursor-pointer" data-filter="completed" aria-selected="false" role="tab">Completed</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="pt-[120px] px-4">
+        <!-- Empty State -->
+        <div id="empty-state" class="flex flex-col items-center justify-center py-12">
+            <div class="w-48 h-48 mb-6">
+                <img src="https://public.readdy.ai/ai/img_res/deaa206151f261058170212bb494446c.jpg" alt="Empty tasks" class="w-full h-full object-contain">
+            </div>
+            <h2 class="text-lg font-medium text-gray-800 mb-2">No tasks yet</h2>
+            <p class="text-gray-500 text-center mb-6">Create your first task by clicking the button below</p>
+            <button id="empty-add-btn" class="bg-primary text-white px-4 py-2 rounded-button flex items-center cursor-pointer">
+                <i class="ri-add-line mr-2"></i>
+                Add New Task
+            </button>
+        </div>
+        <!-- Task List -->
+        <div id="task-container" class="grid grid-cols-1 gap-4 hidden">
+            <!-- Tasks will be added here dynamically -->
+        </div>
+    </main>
+
+    <!-- Add Task Button -->
+    <button id="add-task-btn" class="add-btn fixed bottom-6 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center cursor-pointer">
+        <i class="ri-add-line ri-xl"></i>
+    </button>
+
+    <!-- Add/Edit Task Modal -->
+    <div id="task-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="modal-content bg-white rounded-lg w-full max-w-md mx-4">
+            <div class="p-5">
+                <!-- Modal Header -->
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="modal-title" class="text-lg font-semibold text-gray-800">Add New Task</h2>
+                    <button id="close-modal" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 cursor-pointer">
+                        <i class="ri-close-line text-gray-500"></i>
+                    </button>
+                </div>
+                <!-- Task Form -->
+                <form id="task-form">
+                    <input type="hidden" id="task-id">
+                    <!-- Task Title -->
+                    <div class="mb-4">
+                        <label for="task-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input type="text" id="task-title" class="w-full px-3 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter task title" required minlength="3" maxlength="100" title="Title must be between 3 and 100 characters">
+                        <p class="mt-1 text-xs text-gray-500">3-100 characters</p>
+                    </div>
+                    <!-- Task Description -->
+                    <div class="mb-4">
+                        <label for="task-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="task-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter task description" maxlength="500"></textarea>
+                        <p class="mt-1 text-xs text-gray-500"><span id="description-chars">0</span>/500 characters</p>
+                    </div>
+                    <!-- Due Date and Time -->
+                    <div class="mb-4">
+                        <label for="task-due-date" class="block text-sm font-medium text-gray-700 mb-1">Due Date & Time</label>
+                        <div class="flex space-x-2">
+                            <input type="date" id="task-due-date" class="flex-1 px-3 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <input type="time" id="task-due-time" class="w-32 px-3 py-2 border border-gray-300 rounded-button focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                    </div>
+                    <!-- Subtasks -->
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Subtasks</label>
+                        <div id="subtasks-container" class="space-y-2">
+                            <!-- Subtasks will be added here -->
+                        </div>
+                        <button type="button" id="add-subtask" class="mt-2 px-3 py-1.5 text-sm text-primary border border-primary/30 rounded-button hover:bg-primary/5 flex items-center">
+                            <i class="ri-add-line mr-1"></i>
+                            Add Subtask
+                        </button>
+                    </div>
+                    <!-- Form Actions -->
+                    <div class="flex justify-end">
+                        <button type="button" id="cancel-task" class="px-4 py-2 border border-gray-300 rounded-button text-gray-700 mr-2 hover:bg-gray-50 cursor-pointer">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-button hover:bg-primary/90 cursor-pointer">Save Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="modal-content bg-white rounded-lg w-full max-w-sm mx-4">
+            <div class="p-5">
+                <!-- Modal Header -->
+                <div class="flex flex-col items-center mb-4">
+                    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3">
+                        <i class="ri-delete-bin-line text-red-500 ri-lg"></i>
+                    </div>
+                    <h2 class="text-lg font-semibold text-gray-800">Delete Task</h2>
+                    <p class="text-gray-600 text-center mt-2">Are you sure you want to delete this task? This action cannot be undone.</p>
+                </div>
+                <!-- Modal Actions -->
+                <div class="flex justify-center space-x-3">
+                    <button id="cancel-delete" class="px-4 py-2 border border-gray-300 rounded-button text-gray-700 hover:bg-gray-50 cursor-pointer">Cancel</button>
+                    <button id="confirm-delete" class="px-4 py-2 bg-red-500 text-white rounded-button hover:bg-red-600 cursor-pointer">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script src="script.js"></script>
+</body>
+</html>
+
+
